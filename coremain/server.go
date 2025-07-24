@@ -20,15 +20,17 @@
 package coremain
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net"
+	"time"
+
 	"github.com/IrineSistiana/mosdns/v4/pkg/server"
 	"github.com/IrineSistiana/mosdns/v4/pkg/server/dns_handler"
 	"github.com/IrineSistiana/mosdns/v4/pkg/server/http_handler"
 	"github.com/pires/go-proxyproto"
 	"go.uber.org/zap"
-	"net"
-	"time"
 )
 
 const defaultQueryTimeout = time.Second * 5
@@ -112,16 +114,18 @@ func (m *Mosdns) startServerListener(cfg *ServerListenerConfig, dnsHandler dns_h
 		return proxyproto.REQUIRE, nil
 	}
 
+	config := createListenConfig()
+
 	var run func() error
 	switch cfg.Protocol {
 	case "", "udp":
-		conn, err := net.ListenPacket("udp", cfg.Addr)
+		conn, err := config.ListenPacket(context.Background(), "udp", cfg.Addr)
 		if err != nil {
 			return err
 		}
 		run = func() error { return s.ServeUDP(conn) }
 	case "tcp":
-		l, err := net.Listen("tcp", cfg.Addr)
+		l, err := config.Listen(context.Background(), "tcp", cfg.Addr)
 		if err != nil {
 			return err
 		}
@@ -130,7 +134,7 @@ func (m *Mosdns) startServerListener(cfg *ServerListenerConfig, dnsHandler dns_h
 		}
 		run = func() error { return s.ServeTCP(l) }
 	case "tls", "dot":
-		l, err := net.Listen("tcp", cfg.Addr)
+		l, err := config.Listen(context.Background(), "tcp", cfg.Addr)
 		if err != nil {
 			return err
 		}
@@ -139,7 +143,7 @@ func (m *Mosdns) startServerListener(cfg *ServerListenerConfig, dnsHandler dns_h
 		}
 		run = func() error { return s.ServeTLS(l) }
 	case "http":
-		l, err := net.Listen("tcp", cfg.Addr)
+		l, err := config.Listen(context.Background(), "tcp", cfg.Addr)
 		if err != nil {
 			return err
 		}
@@ -148,7 +152,7 @@ func (m *Mosdns) startServerListener(cfg *ServerListenerConfig, dnsHandler dns_h
 		}
 		run = func() error { return s.ServeHTTP(l) }
 	case "https", "doh":
-		l, err := net.Listen("tcp", cfg.Addr)
+		l, err := config.Listen(context.Background(), "tcp", cfg.Addr)
 		if err != nil {
 			return err
 		}
