@@ -22,14 +22,14 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
+	"time"
+
 	"github.com/IrineSistiana/mosdns/v4/pkg/dnsutils"
 	"github.com/IrineSistiana/mosdns/v4/pkg/pool"
 	"github.com/IrineSistiana/mosdns/v4/pkg/query_context"
 	"github.com/IrineSistiana/mosdns/v4/pkg/utils"
 	"go.uber.org/zap"
-	"io"
-	"net"
-	"time"
 )
 
 const (
@@ -45,11 +45,10 @@ func (s *Server) ServeTCP(l net.Listener) error {
 		return errMissingDNSHandler
 	}
 
-	closer := l.(io.Closer)
-	if ok := s.trackCloser(&closer, true); !ok {
+	if ok := s.trackCloser(l, true); !ok {
 		return ErrServerClosed
 	}
-	defer s.trackCloser(&closer, false)
+	defer s.trackCloser(l, false)
 
 	// handle listener
 	listenerCtx, cancel := context.WithCancel(context.Background())
@@ -69,11 +68,10 @@ func (s *Server) ServeTCP(l net.Listener) error {
 			defer c.Close()
 			defer cancelConn()
 
-			closer := c.(io.Closer)
-			if !s.trackCloser(&closer, true) {
+			if !s.trackCloser(c, true) {
 				return
 			}
-			defer s.trackCloser(&closer, false)
+			defer s.trackCloser(c, false)
 
 			firstReadTimeout := tcpFirstReadTimeout
 			idleTimeout := s.opts.IdleTimeout

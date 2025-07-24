@@ -20,12 +20,12 @@
 package server
 
 import (
-	"go.uber.org/zap"
-	"golang.org/x/net/http2"
-	"io"
 	"net"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
+	"golang.org/x/net/http2"
 )
 
 func (s *Server) ServeHTTP(l net.Listener) error {
@@ -52,11 +52,10 @@ func (s *Server) serveHTTP(l net.Listener, https bool) error {
 		MaxHeaderBytes:    2048,
 		TLSConfig:         s.opts.TLSConfig.Clone(),
 	}
-	closer := io.Closer(hs)
-	if ok := s.trackCloser(&closer, true); !ok {
+	if ok := s.trackCloser(hs, true); !ok {
 		return ErrServerClosed
 	}
-	defer s.trackCloser(&closer, false)
+	defer s.trackCloser(hs, false)
 
 	if err := http2.ConfigureServer(hs, &http2.Server{IdleTimeout: s.opts.IdleTimeout}); err != nil {
 		s.opts.Logger.Error("failed to set up http2 support", zap.Error(err))

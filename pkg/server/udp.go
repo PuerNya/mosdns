@@ -22,13 +22,13 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
+
 	"github.com/IrineSistiana/mosdns/v4/pkg/pool"
 	"github.com/IrineSistiana/mosdns/v4/pkg/query_context"
 	"github.com/IrineSistiana/mosdns/v4/pkg/utils"
 	"github.com/miekg/dns"
 	"go.uber.org/zap"
-	"io"
-	"net"
 )
 
 // cmcUDPConn can read and write cmsg.
@@ -45,11 +45,10 @@ func (s *Server) ServeUDP(c net.PacketConn) error {
 		return errMissingDNSHandler
 	}
 
-	closer := io.Closer(c)
-	if ok := s.trackCloser(&closer, true); !ok {
+	if ok := s.trackCloser(c, true); !ok {
 		return ErrServerClosed
 	}
-	defer s.trackCloser(&closer, false)
+	defer s.trackCloser(c, false)
 
 	listenerCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
