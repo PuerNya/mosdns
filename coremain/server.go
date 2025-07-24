@@ -22,13 +22,14 @@ package coremain
 import (
 	"errors"
 	"fmt"
+	"net"
+	"time"
+
 	"github.com/IrineSistiana/mosdns/v4/pkg/server"
 	"github.com/IrineSistiana/mosdns/v4/pkg/server/dns_handler"
 	"github.com/IrineSistiana/mosdns/v4/pkg/server/http_handler"
 	"github.com/pires/go-proxyproto"
 	"go.uber.org/zap"
-	"net"
-	"time"
 )
 
 const defaultQueryTimeout = time.Second * 5
@@ -120,6 +121,12 @@ func (m *Mosdns) startServerListener(cfg *ServerListenerConfig, dnsHandler dns_h
 			return err
 		}
 		run = func() error { return s.ServeUDP(conn) }
+	case "quic", "doq":
+		conn, err := net.ListenPacket("udp", cfg.Addr)
+		if err != nil {
+			return err
+		}
+		run = func() error { return s.ServeQUIC(conn) }
 	case "tcp":
 		l, err := net.Listen("tcp", cfg.Addr)
 		if err != nil {
