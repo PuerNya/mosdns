@@ -21,12 +21,13 @@ package misc_optm
 
 import (
 	"context"
+	"math/rand"
+
 	"github.com/IrineSistiana/mosdns/v4/coremain"
 	"github.com/IrineSistiana/mosdns/v4/pkg/dnsutils"
 	"github.com/IrineSistiana/mosdns/v4/pkg/executable_seq"
 	"github.com/IrineSistiana/mosdns/v4/pkg/query_context"
 	"github.com/miekg/dns"
-	"math/rand"
 )
 
 const (
@@ -56,6 +57,25 @@ func (t *optm) Exec(ctx context.Context, qCtx *query_context.Context, next execu
 	if isUnusualQuery(q) {
 		r := new(dns.Msg)
 		r.SetRcode(q, dns.RcodeRefused)
+		qCtx.SetResponse(r)
+		return nil
+	}
+
+	if q.Question[0].Qclass == dns.ClassANY {
+		r := new(dns.Msg)
+		r.SetReply(q)
+		r.Answer = []dns.RR{
+			&dns.HINFO{
+				Hdr: dns.RR_Header{
+					Name:   q.Question[0].Name,
+					Rrtype: dns.TypeHINFO,
+					Ttl:    8482,
+					Class:  dns.ClassANY,
+				},
+				Cpu: "ANY obsoleted",
+				Os:  "See RFC 8482",
+			},
+		}
 		qCtx.SetResponse(r)
 		return nil
 	}
