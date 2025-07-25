@@ -30,7 +30,6 @@ import (
 	_ "github.com/IrineSistiana/mosdns/v4/plugin/executable/ecs"
 	_ "github.com/IrineSistiana/mosdns/v4/plugin/executable/edns0_filter"
 	_ "github.com/IrineSistiana/mosdns/v4/plugin/executable/fast_forward"
-	_ "github.com/IrineSistiana/mosdns/v4/plugin/executable/forward"
 	_ "github.com/IrineSistiana/mosdns/v4/plugin/executable/hosts"
 	_ "github.com/IrineSistiana/mosdns/v4/plugin/executable/ipset"
 	_ "github.com/IrineSistiana/mosdns/v4/plugin/executable/marker"
